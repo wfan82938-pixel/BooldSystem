@@ -25,25 +25,23 @@
 
 ---
 
-## 仓库结构说明（请注意代码在子目录）
+## 仓库结构说明
 
-本仓库的 Java 项目位于子目录 `bloodsystem/` 中，根目录仅放文档与脚本。
-
-```
-.
-├─ README.md                 # 当前说明文档（根目录）
-├─ blood_db.sql              # 可选：建库/初始化脚本（根目录）
-├─ .gitignore
-└─ bloodsystem/              # ← 真正的 Spring Boot 项目在这里
-   ├─ pom.xml
-   ├─ mvnw / mvnw.cmd        # Maven Wrapper（Windows 用 mvnw.cmd）
-   ├─ .mvn/wrapper/*         # Maven Wrapper 配置
-   └─ src/
-      ├─ main/java/...       # 后端代码
-      └─ main/resources/
-         ├─ templates/*.html # 前端模板（Thymeleaf）
-         ├─ static/css|js    # 静态资源
-         └─ application.properties
+```text
+BooldSystem/
+├── src/
+│   ├── main/
+│   │   ├── java/com/example/bloodsystem/
+│   │   │   ├── controller/   # Web控制器
+│   │   │   ├── entity/       # 数据库实体 (Donor, Patient, MatchRecord)
+│   │   │   ├── service/      # 核心配型逻辑 (DonorService, HlaUtils)
+│   │   │   └── repository/   # JPA 数据仓库
+│   │   └── resources/
+│   │       ├── templates/    # Thymeleaf 前端模板
+│   │       ├── static/       # CSS, JS, Images
+│   │       └── application.properties # 配置文件
+├── pom.xml                   # Maven 依赖定义
+└── README.md                 # 项目说明文档
 ```
 
 ---
@@ -142,4 +140,5 @@ java -jar target/bloodsystem-0.0.1-SNAPSHOT.jar
   username: admin
   password: 123456
   role: ADMIN
+
   ```
