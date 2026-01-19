@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"> <!-- 🔥 修复乱码 -->
+    <title>档案详情</title>
+    <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body { background: #f5f7fb; font-family: system-ui; }
+        .profile-header { background: #fff; padding: 30px; border-bottom: 1px solid #eef1f5; display: flex; align-items: center; gap: 20px; }
+        .avatar-placeholder { width: 80px; height: 80px; background: #e0e7ff; color: #4338ca; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; }
+        .info-card { background: #fff; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .section-title { font-weight: 700; color: #334155; margin-bottom: 15px; border-left: 4px solid #2563eb; padding-left: 10px; font-size: 1rem; }
+        .data-label { color: #64748b; font-size: 0.85rem; margin-bottom: 4px; }
+        .data-value { color: #1e293b; font-weight: 600; font-size: 1rem; }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments :: navbar(${type == 'donor' ? 'donors' : 'patients'})}"></div>
+
+<div class="profile-header">
+    <div class="avatar-placeholder" th:text="${#strings.substring(person.name, 0, 1)}"></div>
+    <div>
+        <h3 class="fw-bold mb-1">
+            [[${person.name}]]
+            <span class="badge bg-primary fs-6 align-middle ms-2">[[${person.bloodType}]]型</span>
+        </h3>
+        <div class="text-muted font-monospace small">ID: [[${type == 'donor' ? person.donorId : person.patientId}]]</div>
+    </div>
+    <div class="ms-auto d-flex align-items-center gap-3">
+        <span class="badge bg-light text-dark border px-3 py-2" th:if="${type == 'donor'}">供者档案</span>
+        <span class="badge bg-warning text-dark border px-3 py-2" th:if="${type == 'patient'}">患者档案</span>
+
+        <!-- 🔥 新增：患者详情页的删除按钮 -->
+        <form th:if="${type == 'patient'}" th:action="@{'/delete/patient/' + ${person.patientId}}" method="post" onsubmit="return confirm('确定要删除该患者档案吗？此操作不可逆。')">
+            <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash3 me-1"></i>删除档案</button>
+        </form>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- 左侧：基因信息 -->
+        <div class="col-md-5">
+            <div class="info-card">
+                <div class="section-title">HLA 高分辨分型</div>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="data-label">HLA-A1</div>
+                        <div class="data-value font-monospace">[[${person.hlaA1} ?: '-']]</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="data-label">HLA-A2</div>
+                        <div class="data-value font-monospace">[[${person.hlaA2} ?: '-']]</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="data-label">HLA-B1</div>
+                        <div class="data-value font-monospace">[[${person.hlaB1} ?: '-']]</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="data-label">HLA-B2</div>
+                        <div class="data-value font-monospace">[[${person.hlaB2} ?: '-']]</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="section-title">HPA 基因型</div>
+                <div class="d-flex flex-wrap gap-2">
+                    <div class="border rounded px-2 py-1 bg-light" th:each="entry : ${person.getGenotypesMap()}">
+                        <small class="text-muted me-1">[[${entry.key}]]</small>
+                        <span class="fw-bold text-dark">[[${entry.value}]]</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card" th:if="${type == 'patient'}">
+                <div class="section-title text-danger">抗体记录 (DSA)</div>
+                <p class="mb-0 text-danger fw-bold" th:text="${person.antibodies} ?: '无记录'"></p>
+            </div>
+        </div>
+
+        <!-- 右侧：历史记录 -->
+        <div class="col-md-7">
+            <div class="info-card h-100">
+                <div class="section-title">配型与输血记录</div>
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th>时间</th>
+                        <th>[[${type == 'donor' ? '受血患者' : '供血来源'}]]</th>
+                        <th>匹配分/等级</th>
+                        <th>状态</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="r : ${history}">
+                        <td class="small text-muted" th:text="${#temporals.format(r.matchDate, 'yyyy-MM-dd')}"></td>
+                        <td>
+                            <a th:if="${type == 'donor'}" th:href="@{'/profile/patient/'+${r.patient.patientId}}" class="fw-bold text-decoration-none">[[${r.patient.name}]]</a>
+                            <a th:if="${type == 'patient'}" th:href="@{'/profile/donor/'+${r.donor.donorId}}" class="fw-bold text-decoration-none">[[${r.donor.name}]]</a>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border me-1">[[${r.grade}]]级</span>
+                            <span class="small text-secondary">[[${#numbers.formatDecimal(r.score, 1, 0)}]]分</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success bg-opacity-10 text-success">已匹配</span>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(history)}">
+                        <td colspan="4" class="text-center text-muted py-4">暂无历史记录</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

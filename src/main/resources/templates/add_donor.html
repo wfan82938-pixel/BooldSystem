@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"> <!-- 🔥 修复乱码关键 -->
+  <title>供者信息录入</title>
+  <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    body{background:#f3f5f9;height:100vh;overflow:hidden;font-family:system-ui,-apple-system,sans-serif; display: flex; flex-direction: column;}
+    .card-wrap{flex: 1; padding:24px; display:flex; justify-content:center; overflow-y: auto;}
+    .form-card{background:#fff;border:1px solid #edf2f7;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.03);padding:30px;width:100%;max-width:900px; height: fit-content;}
+    .section-title{font-weight:700;color:#334155;margin:20px 0 15px;border-left:4px solid #3b82f6;padding-left:10px;font-size:1.05rem}
+    .form-label{font-size:0.9rem;font-weight:600;color:#64748b}
+  </style>
+</head>
+
+<body>
+
+<div th:replace="~{fragments :: navbar('donors')}"></div>
+
+<div class="card-wrap">
+  <form th:object="${donor}" th:action="@{/save}" method="post" class="form-card">
+    <input type="hidden" th:field="*{version}"/>
+
+    <div th:if="${errorMessage}" class="alert alert-danger mb-4">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${errorMessage}"></span>
+    </div>
+
+    <div class="d-flex align-items-center justify-content-between mb-4 border-bottom pb-3">
+      <h5 class="fw-bold m-0"><i class="bi bi-person-plus-fill text-primary me-2"></i>供者信息录入</h5>
+      <a href="/donors" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>返回列表</a>
+    </div>
+
+    <div class="section-title mt-0">基本信息</div>
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">ID (自动生成/只读)</label>
+        <input th:field="*{donorId}" class="form-control bg-light font-monospace" readonly placeholder="系统自动生成">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">姓名 <span class="text-danger">*</span></label>
+        <input th:field="*{name}" class="form-control" required>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">性别</label>
+        <select th:field="*{gender}" class="form-select">
+          <option value="">-</option><option value="男">男</option><option value="女">女</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">年龄</label>
+        <input type="number" th:field="*{age}" class="form-control" min="0" max="120">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">血型 <span class="text-danger">*</span></label>
+        <select th:field="*{bloodType}" class="form-select" required>
+          <option value="未知">未知</option>
+          <option value="A">A</option><option value="B">B</option><option value="O">O</option><option value="AB">AB</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-title">HPA 基因分型</div>
+    <div class="row g-2">
+      <div class="col-4 col-md-2" th:each="k : ${ {'hpa1','hpa2','hpa3','hpa4','hpa5','hpa6','hpa10','hpa15','hpa21'} }">
+        <label class="form-label text-dark small" th:text="${#strings.toUpperCase(#strings.replace(k,'hpa','HPA-'))}"></label>
+        <select class="form-select form-select-sm" th:field="*{__${k}__}">
+          <option value="">-</option><option value="aa">aa</option><option value="bb">bb</option><option value="ab">ab</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-title">HLA 基因分型 (高分辨)</div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">HLA-A 位点</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light text-secondary">A1</span>
+          <input th:field="*{hlaA1}" class="form-control" placeholder="例: 30:01:01">
+          <span class="input-group-text bg-light text-secondary">A2</span>
+          <input th:field="*{hlaA2}" class="form-control" placeholder="例: 02:01:01">
+        </div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">HLA-B 位点</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light text-secondary">B1</span>
+          <input th:field="*{hlaB1}" class="form-control" placeholder="例: 13:02:01">
+          <span class="input-group-text bg-light text-secondary">B2</span>
+          <input th:field="*{hlaB2}" class="form-control" placeholder="例: 15:18:01">
+        </div>
+      </div>
+    </div>
+
+    <div class="text-end mt-4 pt-3 border-top">
+      <a href="/donors" class="btn btn-light me-2 px-4">取消</a>
+      <button type="submit" class="btn btn-primary px-5 fw-bold">保存信息</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  document.querySelector('form').addEventListener('submit', function(e) {
+    function normalizeHla(fieldId, type) {
+      var input = document.getElementById(fieldId);
+      if (!input) return;
+      var val = input.value.trim();
+      if (!val) return;
+      var upper = val.toUpperCase();
+      var prefixFull = 'HLA-' + type + '*';
+      var prefixShort = type + '*';
+
+      if (upper.startsWith(prefixFull)) {
+        return;
+      } else if (upper.startsWith(prefixShort)) {
+        input.value = "HLA-" + val;
+      } else {
+        input.value = prefixFull + val;
+      }
+    }
+    normalizeHla('hlaA1', 'A');
+    normalizeHla('hlaA2', 'A');
+    normalizeHla('hlaB1', 'B');
+    normalizeHla('hlaB2', 'B');
+  });
+</script>
+
+</body>
+</html>

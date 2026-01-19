@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 公共导航栏 -->
+<div th:fragment="navbar(activeParams)" class="navbar-custom">
+    <div class="app-brand">
+        <i class="bi bi-dna text-primary"></i> 基因库管理系统
+    </div>
+
+    <!-- 中间主菜单 -->
+    <div class="d-flex gap-4">
+        <a href="/match" class="nav-link-custom" th:classappend="${activeParams == 'match'} ? 'active'">
+            <i class="bi bi-magic me-1"></i>智能配型
+        </a>
+        <a href="/donors" class="nav-link-custom" th:classappend="${activeParams == 'donors'} ? 'active'">
+            <i class="bi bi-person-lines-fill me-1"></i>供者库
+        </a>
+        <a href="/patients" class="nav-link-custom" th:classappend="${activeParams == 'patients'} ? 'active'">
+            <i class="bi bi-people-fill me-1"></i>患者库
+        </a>
+    </div>
+
+    <div class="d-flex gap-2 align-items-center">
+        <form th:action="@{/logout}" method="post" class="inline-form ms-2">
+            <button type="submit" class="btn btn-sm btn-outline-secondary border-0" title="退出登录">
+                <i class="bi bi-box-arrow-right fs-5"></i>
+            </button>
+        </form>
+    </div>
+
+    <style>
+        .navbar-custom { height: 64px; background: #fff; border-bottom: 1px solid #eef1f5; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .app-brand { font-weight: 800; font-size: 1.25rem; color: #111827; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px; }
+        .nav-link-custom { text-decoration: none; color: #64748b; font-weight: 600; padding: 8px 16px; border-radius: 8px; transition: all 0.2s; font-size: 0.95rem; }
+        .nav-link-custom:hover { background: #f1f5f9; color: #334155; }
+        .nav-link-custom.active { background: #eff6ff; color: #2563eb; }
+        .nav-link-custom.active i { color: #2563eb; }
+    </style>
+</div>
+
+</body>
+</html>

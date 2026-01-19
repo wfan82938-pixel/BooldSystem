@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>患者库 - 基因库管理系统</title>
+    <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root{ --bg:#f5f7fb; --card:#ffffff; --line:#eef1f5; --text:#1f2937; --primary:#2563eb; }
+        body { background-color: var(--bg); font-family: system-ui, -apple-system, sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        body::after { content: "科研辅助 · 仅供参考"; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 6rem; color: rgba(0,0,0,0.03); pointer-events: none; z-index: 0; white-space: nowrap; font-weight: 800; }
+        .main-card { margin: 20px; background: var(--card); border-radius: 12px; height: calc(100vh - 104px); border: 1px solid var(--line); display: flex; flex-direction: column; overflow: hidden; z-index: 10; }
+        .table-container { flex: 1; overflow: auto; }
+        .table-custom { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .table-custom th { position: sticky; top: 0; background: #f8fafc; color: #475569; padding: 12px; font-weight: 700; font-size: 0.85rem; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+        .table-custom td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; font-size: 0.9rem; white-space: nowrap; }
+        .col-id { color: #0891b2; font-family: Consolas, monospace; font-weight: 600; text-decoration: none; }
+        .col-name { font-weight: 600; color: #1e293b; text-decoration: none; }
+        .col-name:hover { color: #0891b2; text-decoration: underline; }
+        .toolbar { padding: 12px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #fff; }
+        .search-group { display: flex; align-items: center; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 2px; }
+        .search-input { border: none; outline: none; padding: 5px 10px; font-size: 0.9rem; }
+
+        .footer-bar { padding: 10px 20px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; background: var(--card); }
+        .btn-custom-toolbar { display: flex; align-items: center; justify-content: center; height: 34px; padding: 0 16px; font-size: 0.9rem; font-weight: 600; border-radius: 6px; }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments :: navbar('patients')}"></div>
+
+<div class="main-card">
+    <div class="toolbar">
+        <div class="d-flex align-items-center gap-3">
+            <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-people-fill text-info me-2"></i>患者列表</h5>
+            <span class="badge bg-light text-secondary border">共 [[${patientPage.totalElements}]] 人</span>
+        </div>
+
+        <div class="d-flex gap-2">
+            <form action="/patients" method="get">
+                <div class="search-group">
+                    <input type="text" name="keyword" class="search-input" placeholder="搜索患者..." th:value="${keyword}">
+                    <button type="submit" class="btn btn-sm text-secondary"><i class="bi bi-search"></i></button>
+                </div>
+            </form>
+
+            <!-- 🔥 新增：患者库清空按钮 -->
+            <form th:action="@{/reset/patients}" method="post" onsubmit="return confirm('警告：确定要清空所有患者数据吗？此操作不可恢复！')">
+                <button type="submit" class="btn btn-danger btn-custom-toolbar"><i class="bi bi-trash3 me-1"></i>清空库</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table class="table-custom">
+            <thead>
+            <tr>
+                <th>患者ID</th> <th>姓名</th> <th>血型</th> <th>抗体情况</th> <th>录入时间</th> <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${patients}">
+                <td><a th:href="@{'/profile/patient/' + ${p.patientId}}" class="col-id" th:text="${p.patientId}"></a></td>
+                <td><a th:href="@{'/profile/patient/' + ${p.patientId}}" class="col-name" th:text="${p.name}"></a></td>
+                <td><span class="badge bg-light text-dark border" th:text="${p.bloodType}"></span></td>
+                <td>
+                    <span th:if="${#strings.isEmpty(p.antibodies)}" class="text-muted small">-</span>
+                    <span th:unless="${#strings.isEmpty(p.antibodies)}" class="text-danger small fw-bold" th:text="${p.antibodies}"></span>
+                </td>
+                <td class="text-muted small" th:text="${#temporals.format(p.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <a th:href="@{'/profile/patient/' + ${p.patientId}}" class="btn btn-sm btn-outline-info py-0" style="font-size: 0.8rem;">详情</a>
+                        <form th:action="@{'/delete/patient/' + ${p.patientId}}" method="post" onsubmit="return confirm('警告：删除患者将同时删除所有关联的配型记录，确定吗？')">
+                            <button type="submit" class="btn btn-sm btn-outline-danger py-0 border-0" style="font-size: 0.8rem;"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(patients)}"><td colspan="6" class="text-center py-5 text-muted">暂无患者记录，请在“智能配型”页面进行操作</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 🔥 修复：增强型分页条 -->
+    <div class="footer-bar" th:if="${patientPage.totalPages > 0}">
+        <div class="text-secondary small">第 [[${patientPage.number + 1}]] / [[${patientPage.totalPages}]] 页</div>
+
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" th:classappend="${patientPage.first} ? 'disabled'">
+                    <a class="page-link" th:href="@{/patients(page=${patientPage.number - 1}, keyword=${keyword})}">上一页</a>
+                </li>
+
+                <!-- 页码循环 -->
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, patientPage.totalPages - 1)}"
+                    th:classappend="${i == patientPage.number} ? 'active'"
+                    th:if="${i >= patientPage.number - 2 and i <= patientPage.number + 2}">
+                    <a class="page-link" th:href="@{/patients(page=${i}, keyword=${keyword})}" th:text="${i + 1}">1</a>
+                </li>
+
+                <li class="page-item" th:classappend="${patientPage.last} ? 'disabled'">
+                    <a class="page-link" th:href="@{/patients(page=${patientPage.number + 1}, keyword=${keyword})}">下一页</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>
